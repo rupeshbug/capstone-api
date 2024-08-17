@@ -5,7 +5,11 @@ import re
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
+import nltk
 from nltk.corpus import stopwords
+
+# Download the stopwords corpus
+nltk.download('stopwords')
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
