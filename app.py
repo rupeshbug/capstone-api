@@ -14,7 +14,7 @@ nltk.download('stopwords')
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
-# Load models once
+# Load models once 
 lda_model = None
 tfidf_vectorizer = None
 
@@ -33,13 +33,32 @@ def load_models():
         with open('tfidf_vectorizer.pkl', 'rb') as f:
             tfidf_vectorizer = pickle.load(f)
 
-# Dictionary to describe topics
-topic_descriptions = {
-    0: "Music and Media",
-    1: "Science",
-    2: "Politics and Society",
-    3: "Miscellaneous News and Events",
-    4: "Health and Diseases",
+# Dictionary to describe topics with keywords
+topic_keywords = {
+    0: {
+        "description": "Music and Media",
+        "keywords": ["music", "concert", "album", "singer", "band", "performance", "song", "guitar", "festival", "vocalist", "lyrics", "poem", "actors", "films", "movies"]
+    },
+    1: {
+        "description": "Science and Technology",
+        "keywords": ["science", "research", "experiment", "theory", "study", "data", "technology", "innovation", "scientist", "discovery", "space", "physics", "matter", "software", "artificial intelligence", "computer", "mobile"]
+    },
+    2: {
+        "description": "Politics and Society",
+        "keywords": ["politics", "government", "election", "policy", "president", "party", "voter", "campaign", "legislation", "society"]
+    },
+    3: {
+        "description": "Miscellaneous News and Events",
+        "keywords": ["news", "event", "update", "report", "breaking", "headline", "story", "coverage", "announcement", "feature"]
+    },
+    4: {
+        "description": "Health and Diseases",
+        "keywords": ["health", "disease", "virus", "treatment", "medicine", "epidemic", "research", "patient", "doctor", "healthcare", "food", "nurse", "hospital", "clinic"]
+    },
+    5: {
+        "description": "Sports",
+        "keywords": ["sports", "football", "basketball", "soccer", "tournament", "athlete", "team", "game", "score", "championship", "players", "goals", "runs", "win", "lose"]
+    },
 }
 
 @app.route('/analyze-text', methods=['POST'])
@@ -50,7 +69,15 @@ def analyze_text():
     cleaned_text = preprocess(text)
     transformed_text = tfidf_vectorizer.transform([cleaned_text])
     topics = lda_model.transform(transformed_text)
-    result = [(topic_descriptions[i], topics[0][i]) for i in topics[0].argsort()[-2:][::-1]]
+
+    # Adjust scores based on keywords
+    adjusted_scores = topics[0].copy()
+    for idx, topic in topic_keywords.items():
+        keyword_weight = sum([cleaned_text.count(kw) for kw in topic['keywords']])
+        adjusted_scores[idx] += keyword_weight
+
+    # Return the top topics based on adjusted scores
+    result = [(topic_keywords[i]["description"], adjusted_scores[i]) for i in adjusted_scores.argsort()[-2:][::-1]]
     return jsonify(result)
 
 if __name__ == '__main__':
