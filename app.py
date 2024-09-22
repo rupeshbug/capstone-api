@@ -33,32 +33,13 @@ def load_models():
         with open('tfidf_vectorizer.pkl', 'rb') as f:
             tfidf_vectorizer = pickle.load(f)
 
-# Dictionary to describe topics with keywords
-topic_keywords = {
-    0: {
-        "description": "Music and Media",
-        "keywords": ["music", "concert", "album", "singer", "band", "performance", "song", "guitar", "festival", "vocalist", "lyrics", "poem", "actors", "films", "movies"]
-    },
-    1: {
-        "description": "Science and Technology",
-        "keywords": ["science", "research", "experiment", "theory", "study", "data", "technology", "innovation", "scientist", "discovery", "space", "physics", "matter", "software", "artificial intelligence", "computer", "mobile"]
-    },
-    2: {
-        "description": "Politics and Society",
-        "keywords": ["politics", "government", "election", "policy", "president", "party", "voter", "campaign", "legislation", "society"]
-    },
-    3: {
-        "description": "Miscellaneous News and Events",
-        "keywords": ["news", "event", "update", "report", "breaking", "headline", "story", "coverage", "announcement", "feature"]
-    },
-    4: {
-        "description": "Health and Diseases",
-        "keywords": ["health", "disease", "virus", "treatment", "medicine", "epidemic", "research", "patient", "doctor", "healthcare", "food", "nurse", "hospital", "clinic"]
-    },
-    5: {
-        "description": "Sports",
-        "keywords": ["sports", "football", "basketball", "soccer", "tournament", "athlete", "team", "game", "score", "championship", "players", "goals", "runs", "win", "lose"]
-    },
+# Dictionary to describe topics and their keywords
+topic_descriptions = {
+    0: {"name": "Music and Media", "keywords": ["music", "media", "album", "concert", "artist", "song", "band", "vocalist", "video", "radio", "performance", "entertainment"]},
+    1: {"name": "Science and Technology", "keywords": ["science", "technology", "innovation", "research", "experiment", "theory", "biology", "chemistry", "physics", "data", "AI", "machine learning", "engineering"]},
+    2: {"name": "Politics and Society", "keywords": ["politics", "government", "election", "policy", "society", "people", "community", "rights", "debate", "campaign", "democracy", "activism"]},
+    3: {"name": "Miscellaneous News and Events", "keywords": ["news", "event", "report", "update", "story", "headline", "coverage", "journalism", "reporter", "article", "current events", "features"]},
+    4: {"name": "Health and Diseases", "keywords": ["health", "disease", "virus", "treatment", "symptoms", "healthcare", "medical", "pandemic", "nutrition", "exercise", "wellness", "prevention"]},
 }
 
 @app.route('/analyze-text', methods=['POST'])
@@ -70,14 +51,15 @@ def analyze_text():
     transformed_text = tfidf_vectorizer.transform([cleaned_text])
     topics = lda_model.transform(transformed_text)
 
-    # Adjust scores based on keywords
-    adjusted_scores = topics[0].copy()
-    for idx, topic in topic_keywords.items():
-        keyword_weight = sum([cleaned_text.count(kw) for kw in topic['keywords']])
-        adjusted_scores[idx] += keyword_weight
-
-    # Return the top topics based on adjusted scores
-    result = [(topic_keywords[i]["description"], adjusted_scores[i]) for i in adjusted_scores.argsort()[-2:][::-1]]
+    # Get the two highest topics with their keywords
+    result = []
+    for i in topics[0].argsort()[-2:][::-1]:
+        result.append({
+            "topic": topic_descriptions[i]["name"],
+            "score": topics[0][i],
+            "keywords": topic_descriptions[i]["keywords"]
+        })
+    
     return jsonify(result)
 
 if __name__ == '__main__':
