@@ -11,34 +11,36 @@ classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnl
 # Define candidate labels for classification (e.g., Politics, Sports, Science)
 labels = ["Politics", "Sports", "Science", "Health", "Technology"]
 
-# Function to preprocess the text (if needed)
-def preprocess(text):
-    # Optionally, apply text cleaning/preprocessing here
-    return text
-
 @app.route('/analyze-text', methods=['POST'])
 def analyze_text():
-    data = request.json
-    text = data.get('text')
+    try:
+        # Get JSON data from the request
+        data = request.json
+        text = data.get('text')
+        
+        # Ensure the text field is provided and is not empty
+        if not text or not isinstance(text, str):
+            return jsonify({"error": "Invalid input. Please provide a valid text."}), 400
+        
+        # Get classification results
+        result = classifier(text, candidate_labels=labels)
+        
+        # Get the top 2 labels and their probabilities
+        top_labels = result['labels'][:2]
+        top_scores = result['scores'][:2]
+        
+        # Format the result as desired
+        response = {
+            "sequence": result['sequence'],
+            "top_labels": top_labels,
+            "top_scores": top_scores
+        }
+        
+        return jsonify(response)
     
-    # Preprocess the text if needed
-    cleaned_text = preprocess(text)
-    
-    # Get classification results
-    result = classifier(cleaned_text, candidate_labels=labels)
-    
-    # Get the top 2 labels and their probabilities
-    top_labels = result['labels'][:2]
-    top_scores = result['scores'][:2]
-    
-    # Format the result as desired
-    response = {
-        "sequence": result['sequence'],
-        "top_labels": top_labels,
-        "top_scores": top_scores
-    }
-    
-    return jsonify(response)
+    except Exception as e:
+        # Return an error message if something goes wrong
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
