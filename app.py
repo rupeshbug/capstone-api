@@ -4,9 +4,11 @@ from transformers import pipeline
 
 app = Flask(__name__)
 
-# Dynamically allow CORS based on the request's origin
-allowed_origins = ["http://localhost:3000", "https://intextify.vercel.app"]
-CORS(app, origins=allowed_origins)
+# Dynamically allow CORS for localhost and production
+CORS(
+    app,
+    resources={r"/*": {"origins": ["http://localhost:3000", "https://intextify.vercel.app"]}},
+)
 
 # Load pre-trained model
 classifier = pipeline("zero-shot-classification", model="distilbert-base-uncased")
