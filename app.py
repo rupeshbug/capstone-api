@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
 # Load pre-trained BERT model fine-tuned for classification
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+classifier = pipeline("zero-shot-classification", model="distilbert-base-uncased")
 
 # Define candidate labels for classification (e.g., Politics, Sports, Science)
 labels = ["Politics", "Sports", "Science", "Health", "Technology"]
